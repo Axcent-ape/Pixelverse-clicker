@@ -48,10 +48,15 @@ class PixelVerse:
     async def buy_pet(self, balance):
         pets = await self.get_pets()
 
-        if not pets.get('lastBuyAt'): return False
+        can_buy = (
+                not pets.get('lastBuyAt') or
+                (balance >= pets['buyPrice'] and
+                 pets['total'] > len(pets['data']) and
+                 self.iso_to_unix_time(pets.get('lastBuyAt')) + 86400 < self.current_time())
+        )
 
-        if balance <= pets['buyPrice'] or pets['total'] <= len(pets['data']) or self.iso_to_unix_time(
-            pets.get('lastBuyAt')) + 86400 > self.current_time(): return False
+        if not can_buy:
+            return False
 
         url = f"https://api-clicker.pixelverse.xyz/api/pets/buy?tg-id={self.session.headers['Tg-Id']}&secret=adwawdasfajfklasjglrejnoierjboivrevioreboidwa"
         resp = await self.session.post(url, json={})
